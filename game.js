@@ -33,6 +33,7 @@ const el = {
   overTitle: document.getElementById('over-title'),
   restart: document.getElementById('restart'),
   sound: document.getElementById('sound-toggle'),
+  retry: document.getElementById('retry'),
   chart: document.getElementById('chart'),
   notice: document.getElementById('notice'),
   settingsOpen: document.getElementById('settings-open'),
@@ -169,6 +170,7 @@ function reset() {
   unlocked = 0;
   shake = 0;
   lastDrop = -Infinity;
+  disarmRetry();
   setupWorld();
   heldType = randomType();
   nextType = randomType();
@@ -196,6 +198,7 @@ function showTitle() {
 function openPicker() {
   if (phase === 'playing') {
     phase = 'paused';
+    disarmRetry();
     UmaAudio.pauseBgm();
     showPicker(true);
     return;
@@ -260,6 +263,39 @@ function resumeRun() {
   acc = 0;
   UmaAudio.init();
   UmaAudio.resumeBgm(BGM_VOLUME);
+}
+
+// ------------------------------------------------------------------ やり直し
+// キーボードのない端末でも押せるようにボタンを置いてある。
+// 進行中のプレイを消してしまうので、誤操作よけに 2 度押しで確定する。
+const RETRY_CONFIRM = 4000;   // 1 度目の押下が有効な時間 ms
+let retryArmed = 0;
+
+function setRetryArmed(on) {
+  el.retry.textContent = on ? '↻ もう一度押すと最初から' : '↻ やり直し';
+  el.retry.classList.toggle('armed', on);
+}
+
+function disarmRetry() {
+  if (!retryArmed) return;
+  retryArmed = 0;
+  setRetryArmed(false);
+}
+
+function requestRetry() {
+  if (phase !== 'playing' && phase !== 'over') return;
+
+  // まだ何もしていない盤面と、終わったあとは確認せずにやり直す
+  const fresh = phase === 'over' || (items.length === 0 && score === 0);
+  if (fresh || performance.now() - retryArmed < RETRY_CONFIRM) {
+    disarmRetry();
+    startRun();
+    return;
+  }
+
+  const at = retryArmed = performance.now();
+  setRetryArmed(true);
+  setTimeout(() => { if (retryArmed === at) disarmRetry(); }, RETRY_CONFIRM);
 }
 
 // ------------------------------------------------------------------ 操作
@@ -700,7 +736,7 @@ window.addEventListener('keydown', (e) => {
     if (phase === 'playing') drop(); else startRun();
     e.preventDefault();
   }
-  if (e.key === 'r' || e.key === 'R') startRun();
+  if (e.key === 'r' || e.key === 'R') requestRetry();
 });
 
 el.restart.addEventListener('click', startRun);
@@ -708,6 +744,7 @@ el.toTitle.addEventListener('click', showTitle);
 el.shareX.addEventListener('click', shareToX);
 el.saveImage.addEventListener('click', saveResultImage);
 el.settingsOpen.addEventListener('click', openPicker);
+el.retry.addEventListener('click', requestRetry);
 el.start.addEventListener('click', startRun);
 el.sound.addEventListener('click', () => {
   muted = !muted;
@@ -1061,6 +1098,7 @@ window.UmaGame = {
   startRun,
   showTitle,
   openPicker,
+  requestRetry,
   get phase() { return phase; },
   audio: UmaAudio,
   get engine() { return engine; },
