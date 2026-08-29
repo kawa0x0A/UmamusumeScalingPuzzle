@@ -1,0 +1,8 @@
+.DS_Store
+Thumbs.db
+desktop.ini
+node_modules/
+_site/
+
+# ローカルの開発ツール設定
+.claude/

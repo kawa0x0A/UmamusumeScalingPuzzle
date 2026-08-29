@@ -1,0 +1,32 @@
+{
+  "name": "ウマ娘パズルゲーム (ファンメイド)",
+  "short_name": "ウマ娘パズル",
+  "description": "同じウマ娘をくっつけて大きく育てる、非公式のファンメイド落ちものパズル。",
+  "lang": "ja",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2f3552",
+  "theme_color": "#2f3552",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

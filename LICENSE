@@ -19,3 +19,45 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+--------------------------------------------------------------------------
+
+適用範囲について / Scope of this license
+
+上記 MIT License が適用されるのは、このリポジトリに含まれるソースコード
+（HTML / CSS / JavaScript）だけです。
+
+The MIT License above applies ONLY to the source code contained in this
+repository (HTML / CSS / JavaScript).
+
+■ third-party（同梱）
+
+  vendor/matter.min.js — Matter.js (c) Liam Brummitt, MIT License
+  https://github.com/liabru/matter-js
+
+  icons/ のアプリアイコンは本プロジェクトのために描き起こしたもので、
+  MIT License の対象に含まれます。
+
+■ 本リポジトリに含まれないもの / NOT covered and NOT included
+
+  『ウマ娘 プリティーダービー』のキャラクター名・キャラクターアイコン・
+  その他の関連する権利物は、株式会社Cygames をはじめとする各権利者に
+  帰属します。
+
+  キャラクターアイコンは公式ポータルサイト（https://umamusume.jp/）が
+  配布しているものを実行時に読み込んでいるだけで、このリポジトリには
+  同梱も再配布もしていません。data/characters.js が保持しているのは、名前・
+  カテゴリ・イメージカラー・画像の URL といった参照情報のみです。
+
+  Character names, character icons, and other related materials from
+  "Umamusume: Pretty Derby" belong to their respective rights holders,
+  including Cygames, Inc. The icons are loaded at runtime from the official
+  portal site and are neither bundled nor redistributed here.
+
+■ 本プロジェクトの位置づけ / Status
+
+  本プロジェクトは個人が制作した非公式のファンメイド作品であり、
+  権利者による許諾・後援・提携を受けたものではありません。
+
+  This is an unofficial, fan-made project. It is not affiliated with,
+  endorsed by, or sponsored by the rights holders.

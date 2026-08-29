@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ウマ娘パズルゲーム (ファンメイド)</title>
+<meta name="description" content="同じウマ娘をくっつけて大きく育てる、非公式のファンメイド落ちものパズル。">
+<meta name="theme-color" content="#2f3552">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="panel panel-left">
+    <h1 class="title">ウマ娘パズルゲーム<br><span class="title-note">(ファンメイド)</span></h1>
+
+    <div class="scorebox">
+      <div class="score-row">
+        <span class="k">スコア</span>
+        <span class="v" id="score">0</span>
+      </div>
+      <div class="score-row sub">
+        <span class="k">ベスト</span>
+        <span class="v" id="best">0</span>
+      </div>
+    </div>
+
+    <div class="nextbox">
+      <span class="k">つぎ</span>
+      <canvas id="next" width="84" height="84"></canvas>
+      <span class="next-name" id="next-name">—</span>
+    </div>
+
+    <div class="controls">
+      <button id="settings-open" class="btn ghost" type="button"
+              title="メンバーを選び直します（プレイ中はアイコンだけ入れ替えて、そのまま再開します）">⚙ 出走メンバー</button>
+      <button id="sound-toggle" class="btn ghost" type="button">🔊 音 ON</button>
+    </div>
+
+    <p class="notice" id="notice" hidden>
+      アイコンを読み込めませんでした。<br>
+      公式サイトから直接取得しているので、ネットワーク接続を確認してください。
+    </p>
+
+    <p class="help">
+      マウス / 指で位置を決めて離すと投下。<br>
+      <kbd>←</kbd><kbd>→</kbd> 移動 ・ <kbd>Space</kbd> 投下 ・ <kbd>R</kbd> やり直し
+    </p>
+  </aside>
+
+  <main class="stage">
+    <canvas id="board" width="480" height="680" aria-label="ゲーム盤"></canvas>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="over-card">
+        <h2 id="over-title">リタイア...</h2>
+        <p class="over-score">最終スコア <strong id="final-score">0</strong></p>
+        <div class="over-actions">
+          <button id="share-x" class="btn ghost" type="button">X にポスト</button>
+          <button id="save-image" class="btn ghost" type="button">画像を保存</button>
+        </div>
+        <div class="over-actions">
+          <button id="to-title" class="btn ghost" type="button">メンバー変更</button>
+          <button id="restart" class="btn primary" type="button">もう一度遊ぶ</button>
+        </div>
+        <p class="over-note" id="over-note" hidden></p>
+      </div>
+    </div>
+  </main>
+
+  <aside class="panel panel-right">
+    <h2 class="chart-title">育成チャート</h2>
+    <ol id="chart" class="chart"></ol>
+  </aside>
+
+</div>
+
+<div id="title" class="screen">
+  <div class="screen-card">
+    <header class="title-head">
+      <div class="title-name">
+        <h2>ウマ娘パズルゲーム</h2>
+        <p class="title-note">(ファンメイド)</p>
+      </div>
+      <p class="title-lead">
+        同じウマ娘をくっつけて、大きく育てよう
+      </p>
+    </header>
+
+    <ol id="slots" class="slots"></ol>
+
+    <div class="picker-tools">
+      <div class="tools-row">
+        <label class="mode-toggle"
+               title="外すと、その段階に決められたグループの中から選びます。入れると 173 人の誰でも選べます">
+          <input type="checkbox" id="mode-free">
+          <span>全員から選ぶ</span>
+        </label>
+        <input id="search" class="search" type="search" placeholder="名前で絞り込み" autocomplete="off">
+      </div>
+    </div>
+    <div id="picker" class="picker"></div>
+
+    <footer class="title-foot">
+      <span id="pick-count" class="pick-count">0 / 11</span>
+      <button id="pick-default" class="btn ghost" type="button">初期メンバー</button>
+      <button id="pick-random" class="btn ghost" type="button">ランダム</button>
+      <button id="start" class="btn primary" type="button">スタート</button>
+    </footer>
+  </div>
+</div>
+
+<script src="vendor/matter.min.js"></script>
+<script src="audio.js"></script>
+<script src="data/characters.js"></script>
+<script src="items.js"></script>
+<script src="game.js"></script>
+<script>
+  // オフライン起動用。file:// では Service Worker が使えないので黙って見送る
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>
