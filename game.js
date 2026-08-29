@@ -726,6 +726,8 @@ document.addEventListener('visibilitychange', () => {
 // ------------------------------------------------------------------ 結果の共有
 const SHARE_TITLE = 'ウマ娘パズルゲーム (ファンメイド)';
 const SHARE_TAG = 'ウマ娘パズルゲーム';   // ハッシュタグに空白・括弧は使えないので短い方
+// 公開先を直に持つ。手元やコピーから投稿しても、リンク先は公開版になる
+const SHARE_URL = 'https://kawa0x0a.github.io/UmamusumeScalingPuzzle/';
 
 function reachedName() {
   return ITEMS[unlocked] ? ITEMS[unlocked].name : '—';
@@ -748,6 +750,7 @@ function notify(message) {
 function shareToX() {
   const url = 'https://x.com/intent/post'
     + '?text=' + encodeURIComponent(shareText())
+    + '&url=' + encodeURIComponent(SHARE_URL)
     + '&hashtags=' + encodeURIComponent(SHARE_TAG);
   window.open(url, '_blank', 'noopener,noreferrer');
   notify('X の投稿画面を開きました。画像を添えたい場合は「画像を保存」から。');
