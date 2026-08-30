@@ -206,6 +206,10 @@ node tools/fetch-characters.mjs
 ### 調整したいとき
 
 - 段階ごとの大きさ・投下できる種類数・初期メンバー … `items.js`（`SIZES` / `DROPPABLE` / `DEFAULT_PICKS`）
+  - 最大段階の直径がケース内寸のおよそ 0.43 倍になるようにしてあります。
+    これより大きいと最大段階が 2 つ同時に入らなくなるので、`SIZES` の最大値を
+    上げるときは `game.js` の `W`（盤面の幅）と `styles.css` の
+    `aspect-ratio` / `--fit-h` もあわせて見直してください。
 - 段階とグループの対応 … `items.js` の `BUST_GROUPS`（`SIZES` と同じ数だけ並べる）
 - アイコンの取得解像度 … `items.js` の `ICON_W`（盤面用）と `THUMB_W`（一覧用）
 - スコア計算 … `items.js` の `mergeScore()`

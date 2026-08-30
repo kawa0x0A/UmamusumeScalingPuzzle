@@ -4,7 +4,7 @@
 const { Engine, Bodies, Composite, Events } = Matter;
 
 // --- 盤面定数（論理座標。CSS で拡大縮小される） ---
-const W = 480;
+const W = 560;
 const H = 680;
 const WALL = 22;              // 壁の内側までの厚み
 const DROP_Y = 66;            // 持ち駒の高さ
