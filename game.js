@@ -53,6 +53,9 @@ const el = {
   shapeRow: document.querySelector('.shape-row'),
   shapeBtns: [...document.querySelectorAll('.seg-btn')],
   shapeNote: document.getElementById('shape-note'),
+  squareUma: document.getElementById('square-uma'),
+  squareToggle: document.getElementById('square-toggle'),
+  squareNote: document.getElementById('square-note'),
   panelLeft: document.querySelector('.panel-left'),
   panelRight: document.querySelector('.panel-right'),
   foldLeft: document.getElementById('fold-left'),
@@ -80,6 +83,20 @@ let mergeQueue = [];
 // ケースの底の形。プレイ中に変わると当たり判定と見た目がずれるので、
 // 反映は reset()（＝タイトルからの開始）のときだけにしてある
 let shape = loadShape();
+
+// 特殊設定：カルストンライトオだけ四角にする。
+// body の形が変わるので、これも開始時にだけ読む
+let squareUma = loadSquare();
+
+/** その段階が四角いか。四角の一辺は直径の 0.9 倍（面積を円とほぼ揃える） */
+function isSquare(type) {
+  return squareUma && !!ITEMS[type] && ITEMS[type].id === SQUARE_ID;
+}
+
+/** 当たり判定・描画で使う代表寸法。body の形によらず「元の半径」を返す */
+function radiusOf(body) {
+  return body.uma.r;
+}
 
 // 'paused' は「プレイ中にメンバー変更を開いた」状態。盤面もスコアもそのまま残す
 let phase = 'title';      // 'title' | 'playing' | 'paused' | 'over'
@@ -243,33 +260,52 @@ function openPicker() {
 }
 
 /**
- * ケースの形の選択を画面に反映する。
- * プレイ中に開いたときは、当たり判定と見た目がずれるので押せなくする。
+ * 盤面まわりの設定（ケースの形・特殊設定）を画面に反映する。
+ * どちらも body の形を変えるので、プレイ中に開いたときは押せなくする。
  */
-function renderShape(locked) {
+function renderBoardOpts(locked) {
   el.shapeBtns.forEach((btn) => {
     const on = btn.dataset.shape === shape;
     btn.classList.toggle('on', on);
     btn.setAttribute('aria-checked', String(on));
     btn.disabled = locked;
   });
+  el.squareUma.checked = squareUma;
+  el.squareUma.disabled = locked;
   el.shapeRow.classList.toggle('locked', locked);
   el.shapeNote.hidden = !locked;
+  updateSquareNote();
+}
+
+/** 四角にする本人が出走メンバーにいないと何も起きないので、そう伝える */
+function updateSquareNote() {
+  el.squareNote.hidden = !(squareUma && !draft.includes(SQUARE_ID));
 }
 
 function pickShape(next) {
   if (next === shape || phase !== 'title') return;
   shape = next;
   saveShape(shape);
-  renderShape(false);
+  renderBoardOpts(false);
   reset();       // タイトルの後ろに見えている盤面を作り直す
+}
+
+function toggleSquareUma() {
+  if (phase !== 'title') {
+    el.squareUma.checked = squareUma;   // 押せない状態なので戻す
+    return;
+  }
+  squareUma = el.squareUma.checked;
+  saveSquare(squareUma);
+  renderBoardOpts(false);
+  reset();
 }
 
 /** メンバー選択画面を出す。resuming = プレイ中に開いたので盤面を残す */
 function showPicker(resuming) {
   draft = ITEMS.map((it) => it.id);
   renderMode();
-  renderShape(resuming);
+  renderBoardOpts(resuming);
   selectSlot(0);
   el.start.textContent = resuming ? '再開' : 'スタート';
   if (el.titleLead) {
@@ -416,14 +452,23 @@ function drop() {
 
 function spawn(type, x, y, { fresh = false } = {}) {
   const item = ITEMS[type];
-  const body = Bodies.circle(x, y, item.r, {
+  const opt = {
     restitution: 0.12,
     friction: 0.42,
     frictionStatic: 0.7,
     density: 0.0012,
     slop: 0.02,
-  });
-  body.uma = { type, merged: false, landed: !fresh, born: performance.now(), pop: fresh ? 1 : 0 };
+  };
+  const square = isSquare(type);
+  const body = square
+    // 角を少し丸める。尖ったままだと隙間に刺さって抜けなくなる
+    ? Bodies.rectangle(x, y, item.r * 1.8, item.r * 1.8,
+        Object.assign({ chamfer: { radius: item.r * 0.14 } }, opt))
+    : Bodies.circle(x, y, item.r, opt);
+  body.uma = {
+    type, square, r: item.r,
+    merged: false, landed: !fresh, born: performance.now(), pop: fresh ? 1 : 0,
+  };
   Composite.add(world, body);
   items.push(body);
   if (type > unlocked) { unlocked = type; renderChart(); }
@@ -491,7 +536,7 @@ function checkOver(dt) {
   for (const b of items) {
     if (!b.uma.landed) continue;
     if (performance.now() - b.uma.born < 900) continue;  // 落下直後は猶予
-    const top = b.position.y - b.circleRadius;
+    const top = b.bounds.min.y;     // 四角が回っていても正しく測れる
     const speed = Math.hypot(b.velocity.x, b.velocity.y);
     if (top < LINE_Y && speed < 1.2) { breach = true; break; }
   }
@@ -519,10 +564,19 @@ function gameOver() {
 function paintFace(c, type, r) {
   const item = ITEMS[type];
   const img = icons[type];
+  const square = isSquare(type);
+  // 四角のときは body に合わせて一辺 1.8r、角丸も同じだけ付ける
+  const hs = r * 0.9;
+  const round = r * 0.14;
+
+  const outline = () => {
+    c.beginPath();
+    if (square) c.roundRect(-hs, -hs, hs * 2, hs * 2, round);
+    else c.arc(0, 0, r, 0, Math.PI * 2);
+  };
 
   c.save();
-  c.beginPath();
-  c.arc(0, 0, r, 0, Math.PI * 2);
+  outline();
   c.clip();
 
   if (img) {
@@ -545,8 +599,7 @@ function paintFace(c, type, r) {
   c.restore();
 
   // フチ
-  c.beginPath();
-  c.arc(0, 0, r, 0, Math.PI * 2);
+  outline();
   c.lineWidth = Math.max(2, r * 0.07);
   c.strokeStyle = item.color;
   c.stroke();
@@ -554,7 +607,7 @@ function paintFace(c, type, r) {
 
 function drawItem(body) {
   const item = ITEMS[body.uma.type];
-  const r = body.circleRadius;
+  const r = radiusOf(body);
   const scale = 1 + Math.sin(Math.min(1, body.uma.pop) * Math.PI) * 0.18;
 
   ctx.save();
@@ -679,8 +732,8 @@ function drawHeld() {
 
   ctx.globalAlpha = ready ? 1 : 0.4;
   drawItem({
-    position: { x, y: DROP_Y }, angle: 0, circleRadius: r,
-    uma: { type, pop: 1 },
+    position: { x, y: DROP_Y }, angle: 0,
+    uma: { type, pop: 1, r },
   });
   ctx.globalAlpha = 1;
 }
@@ -872,6 +925,7 @@ el.foldRight.addEventListener('click', () => toggleFold('right'));
 el.shapeBtns.forEach((btn) => {
   btn.addEventListener('click', () => pickShape(btn.dataset.shape));
 });
+el.squareUma.addEventListener('change', toggleSquareUma);
 el.start.addEventListener('click', startRun);
 el.sound.addEventListener('click', () => {
   muted = !muted;
@@ -1119,6 +1173,7 @@ function renderSlots() {
     li.appendChild(b);
     el.slots.appendChild(li);
   });
+  updateSquareNote();
 }
 
 function renderPicker() {

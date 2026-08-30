@@ -502,6 +502,11 @@ kbd {
 }
 .mode-toggle:has(input:checked) input { accent-color: #fff; }
 
+/* 特殊設定。ふつうの設定と見分けがつくように色を変える */
+.mode-toggle.special:has(input:checked) { background: #6b4bd6; }
+.mode-toggle.special input { accent-color: #6b4bd6; }
+.mode-toggle:has(input:disabled) { cursor: default; }
+
 .search {
   flex: 1 1 160px;
   min-width: 120px;

@@ -41,6 +41,11 @@ const SHAPE_KEY = 'uma-suika-shape';
 /** ケースの底の形。'u' = U 字 / 'box' = 元ネタと同じ四角 */
 const SHAPES = ['u', 'box'];
 
+const SQUARE_KEY = 'uma-suika-square';
+
+/** 特殊設定でひとりだけ四角くなるウマ娘 */
+const SQUARE_ID = 'calstonelighto';
+
 /**
  * 選択画面のグループ分け。公式プロフィールのスリーサイズ B 値の範囲で区切る。
  * [下限, 上限]（どちらも含む）。ここを書き換えれば区切りを変えられる。
@@ -127,6 +132,21 @@ function loadShape() {
 function saveShape(v) {
   try {
     localStorage.setItem(SHAPE_KEY, SHAPES.includes(v) ? v : 'u');
+  } catch (_) { /* 保存できなくても遊べる */ }
+}
+
+/** カルストンライトオを四角にするかどうか。形と同じくゲーム中は変えられない */
+function loadSquare() {
+  try {
+    return localStorage.getItem(SQUARE_KEY) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function saveSquare(on) {
+  try {
+    localStorage.setItem(SQUARE_KEY, on ? '1' : '0');
   } catch (_) { /* 保存できなくても遊べる */ }
 }
 
