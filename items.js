@@ -36,6 +36,10 @@ const THUMB_W = 96;
 
 const PICKS_KEY = 'uma-suika-picks';
 const FREE_KEY = 'uma-suika-freemode';
+const SHAPE_KEY = 'uma-suika-shape';
+
+/** ケースの底の形。'u' = U 字 / 'box' = 元ネタと同じ四角 */
+const SHAPES = ['u', 'box'];
 
 /**
  * 選択画面のグループ分け。公式プロフィールのスリーサイズ B 値の範囲で区切る。
@@ -108,6 +112,21 @@ function loadFreeMode() {
 function saveFreeMode(on) {
   try {
     localStorage.setItem(FREE_KEY, on ? '1' : '0');
+  } catch (_) { /* 保存できなくても遊べる */ }
+}
+
+/** ケースの形を覚えておく。ゲーム中は変えられないので、開始時にだけ読む */
+function loadShape() {
+  try {
+    const v = localStorage.getItem(SHAPE_KEY);
+    if (SHAPES.includes(v)) return v;
+  } catch (_) { /* 読めなければ既定 */ }
+  return 'u';
+}
+
+function saveShape(v) {
+  try {
+    localStorage.setItem(SHAPE_KEY, SHAPES.includes(v) ? v : 'u');
   } catch (_) { /* 保存できなくても遊べる */ }
 }
 

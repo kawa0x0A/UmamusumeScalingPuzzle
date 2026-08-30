@@ -429,6 +429,48 @@ kbd {
   flex-wrap: wrap;
 }
 
+/* ケースの形の切り替え。プレイ中に開いたときは押せなくする */
+.shape-row { margin-top: 8px; }
+.shape-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.seg {
+  display: inline-flex;
+  background: #eef2f8;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+.seg-btn {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.seg-btn:hover:not(:disabled):not(.on) { background: #e4eaf4; }
+.seg-btn.on {
+  background: var(--accent);
+  color: #fff;
+}
+.seg-btn:disabled { cursor: default; }
+.shape-row.locked { opacity: 0.55; }
+.shape-note {
+  font-size: 11px;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
 /* 選び方の切り替え */
 .mode-toggle {
   display: inline-flex;
@@ -633,6 +675,8 @@ kbd {
   .tools-row { gap: 6px; }
   .mode-toggle { flex: 1 1 100%; justify-content: center; }
   .search { flex: 1 1 100%; }
+  .shape-row { margin-top: 6px; justify-content: center; }
+  .shape-note { flex: 1 1 100%; text-align: center; }
 }
 
 /* ------------------------------------------------ モバイル：縦積み

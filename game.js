@@ -50,6 +50,9 @@ const el = {
   pickDefault: document.getElementById('pick-default'),
   pickRandom: document.getElementById('pick-random'),
   modeFree: document.getElementById('mode-free'),
+  shapeRow: document.querySelector('.shape-row'),
+  shapeBtns: [...document.querySelectorAll('.seg-btn')],
+  shapeNote: document.getElementById('shape-note'),
   panelLeft: document.querySelector('.panel-left'),
   panelRight: document.querySelector('.panel-right'),
   foldLeft: document.getElementById('fold-left'),
@@ -74,6 +77,10 @@ let effects = [];        // 合体エフェクト
 let popups = [];         // スコア表示
 let shake = 0;
 let mergeQueue = [];
+// ケースの底の形。プレイ中に変わると当たり判定と見た目がずれるので、
+// 反映は reset()（＝タイトルからの開始）のときだけにしてある
+let shape = loadShape();
+
 // 'paused' は「プレイ中にメンバー変更を開いた」状態。盤面もスコアもそのまま残す
 let phase = 'title';      // 'title' | 'playing' | 'paused' | 'over'
 
@@ -154,17 +161,22 @@ function setupWorld() {
     Bodies.rectangle(RIGHT + 200, H / 2, 400, H * 2, opt),        // 右の直線壁
   ];
 
-  // 半円の底。短い板を少しずつ重ねて並べ、すり抜けないようにする
   const t = 40;
-  const seg = (Math.PI * BOWL_R / BOWL_SEGMENTS) * 1.8;
-  for (let i = 0; i < BOWL_SEGMENTS; i++) {
-    const a = Math.PI * (1 - (i + 0.5) / BOWL_SEGMENTS);   // π → 0（下側を通る）
-    walls.push(Bodies.rectangle(
-      BOWL_CX + Math.cos(a) * (BOWL_R + t / 2),
-      BOWL_CY + Math.sin(a) * (BOWL_R + t / 2),
-      seg, t,
-      Object.assign({ angle: a + Math.PI / 2 }, opt)
-    ));
+  if (shape === 'box') {
+    // 元ネタと同じ平らな床
+    walls.push(Bodies.rectangle(W / 2, FLOOR + t / 2, W, t, opt));
+  } else {
+    // 半円の底。短い板を少しずつ重ねて並べ、すり抜けないようにする
+    const seg = (Math.PI * BOWL_R / BOWL_SEGMENTS) * 1.8;
+    for (let i = 0; i < BOWL_SEGMENTS; i++) {
+      const a = Math.PI * (1 - (i + 0.5) / BOWL_SEGMENTS);   // π → 0（下側を通る）
+      walls.push(Bodies.rectangle(
+        BOWL_CX + Math.cos(a) * (BOWL_R + t / 2),
+        BOWL_CY + Math.sin(a) * (BOWL_R + t / 2),
+        seg, t,
+        Object.assign({ angle: a + Math.PI / 2 }, opt)
+      ));
+    }
   }
   Composite.add(world, walls);
 
@@ -230,10 +242,34 @@ function openPicker() {
   showTitle();
 }
 
+/**
+ * ケースの形の選択を画面に反映する。
+ * プレイ中に開いたときは、当たり判定と見た目がずれるので押せなくする。
+ */
+function renderShape(locked) {
+  el.shapeBtns.forEach((btn) => {
+    const on = btn.dataset.shape === shape;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', String(on));
+    btn.disabled = locked;
+  });
+  el.shapeRow.classList.toggle('locked', locked);
+  el.shapeNote.hidden = !locked;
+}
+
+function pickShape(next) {
+  if (next === shape || phase !== 'title') return;
+  shape = next;
+  saveShape(shape);
+  renderShape(false);
+  reset();       // タイトルの後ろに見えている盤面を作り直す
+}
+
 /** メンバー選択画面を出す。resuming = プレイ中に開いたので盤面を残す */
 function showPicker(resuming) {
   draft = ITEMS.map((it) => it.id);
   renderMode();
+  renderShape(resuming);
   selectSlot(0);
   el.start.textContent = resuming ? '再開' : 'スタート';
   if (el.titleLead) {
@@ -554,14 +590,26 @@ function drawItem(body) {
   ctx.restore();
 }
 
-/** U 字ケースの内側の輪郭 */
+/** ケースの内側の輪郭。底の形は設定で切り替わる */
 function bowlPath(c) {
   c.beginPath();
   c.moveTo(LEFT, -20);
-  c.lineTo(LEFT, BOWL_CY);
-  c.arc(BOWL_CX, BOWL_CY, BOWL_R, Math.PI, 0, true);   // 下側を通って右へ
+  if (shape === 'box') {
+    c.lineTo(LEFT, FLOOR);
+    c.lineTo(RIGHT, FLOOR);
+  } else {
+    c.lineTo(LEFT, BOWL_CY);
+    c.arc(BOWL_CX, BOWL_CY, BOWL_R, Math.PI, 0, true);   // 下側を通って右へ
+  }
   c.lineTo(RIGHT, -20);
   c.closePath();
+}
+
+/** x の位置で、落とした駒が着地する高さ（投下ガイドの終点） */
+function floorAt(x) {
+  if (shape === 'box') return FLOOR;
+  const dx = Math.abs(x - BOWL_CX);
+  return BOWL_CY + (dx < BOWL_R ? Math.sqrt(BOWL_R * BOWL_R - dx * dx) : 0);
 }
 
 function drawBoard() {
@@ -622,8 +670,7 @@ function drawHeld() {
   ctx.setLineDash([6, 10]);
   ctx.strokeStyle = ready ? 'rgba(120,140,170,0.5)' : 'rgba(120,140,170,0.2)';
   ctx.lineWidth = 2;
-  const dx = Math.abs(x - BOWL_CX);
-  const bottom = BOWL_CY + (dx < BOWL_R ? Math.sqrt(BOWL_R * BOWL_R - dx * dx) : 0);
+  const bottom = floorAt(x);
   ctx.beginPath();
   ctx.moveTo(x, DROP_Y + r);
   ctx.lineTo(x, bottom);
@@ -822,6 +869,9 @@ el.settingsOpen.addEventListener('click', openPicker);
 el.retry.addEventListener('click', requestRetry);
 el.foldLeft.addEventListener('click', () => toggleFold('left'));
 el.foldRight.addEventListener('click', () => toggleFold('right'));
+el.shapeBtns.forEach((btn) => {
+  btn.addEventListener('click', () => pickShape(btn.dataset.shape));
+});
 el.start.addEventListener('click', startRun);
 el.sound.addEventListener('click', () => {
   muted = !muted;

@@ -131,6 +131,15 @@
         </label>
         <input id="search" class="search" type="search" placeholder="名前で絞り込み" autocomplete="off">
       </div>
+
+      <div class="tools-row shape-row">
+        <span class="shape-label" id="shape-label">ケースの形</span>
+        <div class="seg" role="radiogroup" aria-labelledby="shape-label">
+          <button type="button" class="seg-btn" data-shape="u" role="radio" aria-checked="true">U 字</button>
+          <button type="button" class="seg-btn" data-shape="box" role="radio" aria-checked="false">四角</button>
+        </div>
+        <span class="shape-note" id="shape-note" hidden>プレイ中は変えられません</span>
+      </div>
     </div>
     <div id="picker" class="picker"></div>
 
