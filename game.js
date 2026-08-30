@@ -50,6 +50,10 @@ const el = {
   pickDefault: document.getElementById('pick-default'),
   pickRandom: document.getElementById('pick-random'),
   modeFree: document.getElementById('mode-free'),
+  panelLeft: document.querySelector('.panel-left'),
+  panelRight: document.querySelector('.panel-right'),
+  foldLeft: document.getElementById('fold-left'),
+  foldRight: document.getElementById('fold-right'),
   title: document.getElementById('title'),
   titleLead: document.querySelector('.title-lead'),
   start: document.getElementById('start'),
@@ -284,6 +288,38 @@ function resumeRun() {
   acc = 0;
   UmaAudio.init();
   UmaAudio.resumeBgm(BGM_VOLUME);
+}
+
+// ------------------------------------------------------------------ 折りたたみ
+// 狭い画面では説明とチャートが場所を取るので、たたんで盤面に高さを回せるようにする。
+// たたむボタンは CSS 側でモバイルのときだけ表示している。
+const FOLD_KEY = 'uma-suika-folds';
+const folds = loadFolds();
+
+function loadFolds() {
+  try {
+    const v = JSON.parse(localStorage.getItem(FOLD_KEY));
+    if (v && typeof v === 'object') return { left: !!v.left, right: !!v.right };
+  } catch (_) { /* 壊れていたら既定に戻す */ }
+  // チャートは見なくても遊べるので、最初はたたんでおく
+  return { left: false, right: true };
+}
+
+function applyFold(side) {
+  const panel = side === 'left' ? el.panelLeft : el.panelRight;
+  const btn = side === 'left' ? el.foldLeft : el.foldRight;
+  const on = folds[side];
+  panel.classList.toggle('folded', on);
+  btn.textContent = on ? '▸' : '▾';
+  btn.setAttribute('aria-expanded', String(!on));
+  btn.title = on ? '表示をひらく' : '表示をたたむ';
+}
+
+function toggleFold(side) {
+  folds[side] = !folds[side];
+  try { localStorage.setItem(FOLD_KEY, JSON.stringify(folds)); } catch (_) { /* 保存できなくても続ける */ }
+  applyFold(side);
+  fitAll();      // 盤面の大きさが変わる
 }
 
 // ------------------------------------------------------------------ やり直し
@@ -784,6 +820,8 @@ el.shareX.addEventListener('click', shareToX);
 el.saveImage.addEventListener('click', saveResultImage);
 el.settingsOpen.addEventListener('click', openPicker);
 el.retry.addEventListener('click', requestRetry);
+el.foldLeft.addEventListener('click', () => toggleFold('left'));
+el.foldRight.addEventListener('click', () => toggleFold('right'));
 el.start.addEventListener('click', startRun);
 el.sound.addEventListener('click', () => {
   muted = !muted;
@@ -1149,6 +1187,8 @@ window.UmaGame = {
   get score() { return score; },
 };
 
+applyFold('left');
+applyFold('right');
 el.sound.textContent = muted ? '🔇 音 OFF' : '🔊 音 ON';
 applyMute();
 loadIcons();

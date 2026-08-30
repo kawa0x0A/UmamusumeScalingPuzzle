@@ -58,6 +58,19 @@ body {
   gap: 14px;
 }
 
+/* パネルの見出し行。たたむボタンは狭い画面のときだけ出す */
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* PC ではラップを無かったことにして、中身をそのままパネルの子として並べる */
+.foldable { display: contents; }
+
+.fold-btn { display: none; }
+
 .title {
   margin: 0;
   font-size: 20px;
@@ -622,19 +635,102 @@ kbd {
   .search { flex: 1 1 100%; }
 }
 
-/* ------------------------------------------------ モバイル：縦積み */
+/* ------------------------------------------------ モバイル：縦積み
+   1 画面に収めたいので、盤面に残りの高さを全部渡す。
+   説明とチャートはたためるようにして、既定ではチャートを閉じておく。 */
 @media (max-width: 640px) {
-  body { align-items: flex-start; overflow-y: auto; }
-  .app { flex-wrap: wrap; gap: 12px; }
-  .panel { width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; }
-  .panel-left .title { flex: 1 1 100%; }
+  body {
+    align-items: stretch;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .app {
+    --edge: 10px;
+
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .panel {
+    width: 100%;
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .panel-head { flex: 1 1 100%; align-items: center; }
+  .fold-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 9px;
+    background: #e6ecf7;
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .fold-btn:active { transform: translateY(1px); }
+
+  /* たたんだときは見出し行だけ残す */
+  .foldable {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel.folded .foldable,
+  .panel.folded .chart { display: none; }
+
+  /* タイトルは 1 行に詰める */
+  .title { font-size: 15px; }
+  .title br { display: none; }
+  .title-note { margin-left: 6px; }
+
   .scorebox, .nextbox, .controls { flex: 1 1 auto; }
+  .scorebox { padding: 6px 10px; }
+  .v { font-size: 20px; }
+  .score-row.sub .v { font-size: 13px; }
+  .nextbox { flex-direction: row; padding: 6px 10px; }
+  #next { width: 40px; height: 40px; }
   .controls { flex-direction: row; }
-  .nextbox { flex-direction: row; }
-  .help { flex: 1 1 100%; margin-top: 4px; }
-  .stage { width: 100%; justify-content: center; }
-  #board { height: min(62vh, 680px); width: auto; max-width: 100%; }
-  .chart { flex-direction: row; flex-wrap: wrap; gap: 10px; }
+  .btn { font-size: 12px; padding: 8px 6px; }
+
+  .help { flex: 1 1 100%; margin: 0; }
+  /* 物理キーボードのない端末なので、キー操作の行は省く */
+  .help-keys { display: none; }
+
+  .stage {
+    flex: 1 1 0;
+    min-height: 200px;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+  }
+  #board {
+    /* 画面幅から決まる高さ。残りの高さと小さい方を採る */
+    --fit-h: calc((100vw - 2 * var(--edge)) * 680 / 480);
+
+    height: min(100%, var(--fit-h), 680px);
+    width: auto;
+    max-width: 100%;
+  }
+
+  .chart { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 10px; }
   .chart-item { gap: 5px; }
   .chart-label { font-size: 10.5px; }
 }

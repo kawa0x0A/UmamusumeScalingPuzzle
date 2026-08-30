@@ -28,7 +28,11 @@
 <div class="app">
 
   <aside class="panel panel-left">
-    <h1 class="title">ウマ娘パズルゲーム<br><span class="title-note">(ファンメイド)</span></h1>
+    <div class="panel-head">
+      <h1 class="title">ウマ娘パズルゲーム<br><span class="title-note">(ファンメイド)</span></h1>
+      <button id="fold-left" class="fold-btn" type="button"
+              aria-expanded="true" aria-controls="left-body">▾</button>
+    </div>
 
     <div class="scorebox">
       <div class="score-row">
@@ -47,12 +51,19 @@
       <span class="next-name" id="next-name">—</span>
     </div>
 
-    <div class="controls">
-      <button id="settings-open" class="btn ghost" type="button"
-              title="メンバーを選び直します（プレイ中はアイコンだけ入れ替えて、そのまま再開します）">⚙ 出走メンバー</button>
-      <button id="sound-toggle" class="btn ghost" type="button">🔊 音 ON</button>
-      <button id="retry" class="btn ghost" type="button"
-              title="いまのプレイを捨てて最初からやり直します">↻ やり直し</button>
+    <div id="left-body" class="foldable">
+      <div class="controls">
+        <button id="settings-open" class="btn ghost" type="button"
+                title="メンバーを選び直します（プレイ中はアイコンだけ入れ替えて、そのまま再開します）">⚙ 出走メンバー</button>
+        <button id="sound-toggle" class="btn ghost" type="button">🔊 音 ON</button>
+        <button id="retry" class="btn ghost" type="button"
+                title="いまのプレイを捨てて最初からやり直します">↻ やり直し</button>
+      </div>
+
+      <p class="help">
+        マウス / 指で位置を決めて離すと投下。<span class="help-keys"><br>
+        <kbd>←</kbd><kbd>→</kbd> 移動 ・ <kbd>Space</kbd> 投下 ・ <kbd>R</kbd> やり直し</span>
+      </p>
     </div>
 
     <p class="notice" id="audio-notice" hidden>
@@ -63,11 +74,6 @@
     <p class="notice" id="notice" hidden>
       アイコンを読み込めませんでした。<br>
       公式サイトから直接取得しているので、ネットワーク接続を確認してください。
-    </p>
-
-    <p class="help">
-      マウス / 指で位置を決めて離すと投下。<br>
-      <kbd>←</kbd><kbd>→</kbd> 移動 ・ <kbd>Space</kbd> 投下 ・ <kbd>R</kbd> やり直し
     </p>
   </aside>
 
@@ -92,7 +98,11 @@
   </main>
 
   <aside class="panel panel-right">
-    <h2 class="chart-title">育成チャート</h2>
+    <div class="panel-head">
+      <h2 class="chart-title">育成チャート</h2>
+      <button id="fold-right" class="fold-btn" type="button"
+              aria-expanded="true" aria-controls="chart">▾</button>
+    </div>
     <ol id="chart" class="chart"></ol>
   </aside>
 
