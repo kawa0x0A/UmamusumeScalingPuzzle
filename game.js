@@ -981,7 +981,7 @@ function shareToX() {
 function buildResultCanvas() {
   const pad = 18;
   const head = 108;
-  const foot = 64;
+  const foot = 132;      // 到達段階の行＋出走メンバーの並び
   const out = document.createElement('canvas');
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = W + pad * 2;
@@ -1031,29 +1031,42 @@ function buildResultCanvas() {
   c.stroke();
 
   // 到達した段階のアイコンを添えて締める
+  const footTop = head + H;
   c.textAlign = 'left';
   c.textBaseline = 'middle';
-  const footY = head + H + foot / 2;
+  const footY = footTop + 30;
   const img = icons[unlocked];
   if (img) {
     const r = 20;
     c.save();
-    c.beginPath();
-    c.arc(pad + r, footY, r, 0, Math.PI * 2);
-    c.clip();
-    c.fillStyle = '#fff';
-    c.fillRect(pad, footY - r, r * 2, r * 2);
-    c.drawImage(img, pad, footY - r, r * 2, r * 2);
+    c.translate(pad + r, footY);
+    paintFace(c, unlocked, r);
     c.restore();
-    c.beginPath();
-    c.arc(pad + r, footY, r, 0, Math.PI * 2);
-    c.strokeStyle = ITEMS[unlocked].color;
-    c.lineWidth = 2.5;
-    c.stroke();
   }
   c.fillStyle = 'rgba(255,255,255,0.85)';
   c.font = '700 15px system-ui, sans-serif';
   c.fillText(reachedName() + ' まで育成', pad + (img ? 50 : 0), footY);
+
+  // 出走メンバーを小さい順に並べる。どの子で遊んだかが画像だけで分かるように
+  c.textAlign = 'right';
+  c.fillStyle = 'rgba(255,255,255,0.45)';
+  c.font = '600 12px system-ui, sans-serif';
+  c.fillText('出走メンバー', w - pad, footY);
+
+  const sizes = ITEMS.map((_, i) => 30 + i * 2.2);
+  const gap = 8;
+  const span = sizes.reduce((sum, d) => sum + d, 0) + gap * (ITEMS.length - 1);
+  const bottom = footTop + 112;      // 下端をそろえて、右へ行くほど大きく見せる
+  let x = (w - span) / 2;
+  ITEMS.forEach((_, i) => {
+    const r = sizes[i] / 2;
+    c.save();
+    c.globalAlpha = i <= unlocked ? 1 : 0.5;    // 届かなかった段階は薄く（画面のチャートと同じ濃さ）
+    c.translate(x + r, bottom - r);
+    paintFace(c, i, r);
+    c.restore();
+    x += sizes[i] + gap;
+  });
 
   return out;
 }
