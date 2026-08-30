@@ -47,6 +47,7 @@ const UmaAudio = (() => {
   let timer = null;
   let stepIndex = 0;
   let nextStepTime = 0;
+  let onState = null;      // 出力状態が変わったときの通知先（game.js が使う）
 
   const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -54,6 +55,14 @@ const UmaAudio = (() => {
   function ac() {
     if (ctx) return ctx;
     ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // iOS/WebKit はバックグラウンド・着信・Siri などで勝手に止まる
+    // （'suspended' のほか WebKit 独自の 'interrupted' になる）。
+    // 復帰したら予約時刻を今に合わせ直さないと、鳴らない時間が続く。
+    ctx.addEventListener('statechange', () => {
+      if (ctx.state === 'running' && timer) nextStepTime = ctx.currentTime + 0.05;
+      if (onState) onState(ctx.state);
+    });
 
     master = ctx.createGain();
     master.gain.value = muted ? 0 : 1;
@@ -90,9 +99,36 @@ const UmaAudio = (() => {
     return ctx;
   }
 
-  /** 最初のユーザー操作で呼ぶ。自動再生制限の解除用 */
+  /**
+   * 出力を起こす。自動再生制限の解除と、iOS の中断からの復帰を兼ねる。
+   * 画面操作の中から呼ぶこと（そうでないと iOS では resume が失敗しうる）。
+   */
   function init() {
-    ac().resume?.();
+    const c = ac();
+    if (c.state !== 'running') c.resume?.().catch(() => {});
+    return c.state;
+  }
+
+  /**
+   * iPhone の消音スイッチ対策。
+   * 既定（ambient）だとスイッチが消音側のとき WebAudio は一切鳴らない。
+   * BGM を流している間だけ playback にして、止めたら戻す。
+   * iOS 16.4 未満や他ブラウザにはこの API がないので、あれば使う程度に扱う。
+   */
+  function setSession(type) {
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = type;
+    } catch (_) { /* 未対応 */ }
+  }
+
+  /** 出力の状態（'running' なら鳴っている）。未生成なら null */
+  function state() {
+    return ctx ? ctx.state : null;
+  }
+
+  /** 状態が変わったときに呼ばれる関数を登録する */
+  function setStateListener(fn) {
+    onState = fn;
   }
 
   function noise(t, dur) {
@@ -380,6 +416,8 @@ const UmaAudio = (() => {
   function startBgm(volume) {
     const c = ac();
     stopBgm();
+    init();
+    setSession('playback');
     stepIndex = 0;
     nextStepTime = c.currentTime + 0.1;
     bgmBus.gain.cancelScheduledValues(c.currentTime);
@@ -391,6 +429,7 @@ const UmaAudio = (() => {
 
   function stopBgm() {
     if (timer) { clearInterval(timer); timer = null; }
+    setSession('auto');
     if (bgmBus) {
       const t = ctx.currentTime;
       bgmBus.gain.cancelScheduledValues(t);
@@ -405,7 +444,11 @@ const UmaAudio = (() => {
 
   function resumeBgm(volume) {
     if (timer || !ctx) return;
-    nextStepTime = Math.max(nextStepTime, ctx.currentTime + 0.05);
+    // 裏に回っている間に止められているので、まず起こす。
+    // 起こし終える前に予約しても意味がないぶんは statechange 側で取り直す。
+    init();
+    setSession('playback');
+    nextStepTime = ctx.currentTime + 0.05;
     bgmBus.gain.setValueAtTime(volume, ctx.currentTime);
     tick();
     timer = setInterval(tick, LOOKAHEAD_MS);
@@ -440,7 +483,7 @@ const UmaAudio = (() => {
   }
 
   return {
-    init, setMuted, tap, debug,
+    init, setMuted, tap, debug, state, setStateListener,
     drop, merge, finish, fanfareStart, fanfareEnd,
     startBgm, stopBgm, pauseBgm, resumeBgm,
   };

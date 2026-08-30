@@ -36,6 +36,7 @@ const el = {
   retry: document.getElementById('retry'),
   chart: document.getElementById('chart'),
   notice: document.getElementById('notice'),
+  audioNotice: document.getElementById('audio-notice'),
   settingsOpen: document.getElementById('settings-open'),
   toTitle: document.getElementById('to-title'),
   shareX: document.getElementById('share-x'),
@@ -109,6 +110,25 @@ function startBgm() {
 function stopBgm() {
   UmaAudio.stopBgm();
 }
+
+/**
+ * 出力が止まっているあいだだけ案内を出す。
+ * iOS は裏に回る・着信・Siri などで勝手に止まり、画面操作の中でしか起こせない。
+ */
+function updateAudioNotice() {
+  const shouldPlay = !muted && (phase === 'playing' || phase === 'paused');
+  el.audioNotice.hidden = !(shouldPlay && UmaAudio.state() && UmaAudio.state() !== 'running');
+}
+
+UmaAudio.setStateListener(updateAudioNotice);
+
+// 止まっていたら、どこを触っても起こす（iOS は操作の中でしか resume できない）
+document.addEventListener('pointerdown', () => {
+  if (UmaAudio.state() && UmaAudio.state() !== 'running') {
+    UmaAudio.init();
+    if (phase === 'playing') UmaAudio.resumeBgm(BGM_VOLUME);
+  }
+}, { capture: true, passive: true });
 
 const sfx = {
   drop: () => UmaAudio.drop(),
@@ -249,6 +269,7 @@ function startRun() {
   el.title.classList.add('hidden');
   reset();
   phase = 'playing';
+  setTimeout(updateAudioNotice, 400);
 }
 
 /** メンバー変更から戻る。アイコンと名前だけ入れ替えて続きを遊ぶ */
@@ -752,12 +773,15 @@ el.sound.addEventListener('click', () => {
   el.sound.textContent = muted ? '🔇 音 OFF' : '🔊 音 ON';
   applyMute();
   if (!muted) UmaAudio.merge(4);
+  updateAudioNotice();
 });
 
 // 裏に回っている間は BGM を止める
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) UmaAudio.pauseBgm();
-  else if (phase === 'playing') UmaAudio.resumeBgm(BGM_VOLUME);
+  if (document.hidden) { UmaAudio.pauseBgm(); return; }
+  if (phase === 'playing') UmaAudio.resumeBgm(BGM_VOLUME);
+  // resume は非同期なので、少し待ってから鳴っているか見る
+  setTimeout(updateAudioNotice, 400);
 });
 
 // ------------------------------------------------------------------ 結果の共有
