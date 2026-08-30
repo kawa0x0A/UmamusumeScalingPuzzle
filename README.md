@@ -245,6 +245,8 @@ node tools/fetch-characters.mjs
 - アイコンの取得解像度 … `items.js` の `ICON_W`（盤面用）と `THUMB_W`（一覧用）
 - ケースの形の既定値 … `items.js` の `loadShape()`（`'u'` / `'box'`）
 - 四角にするウマ娘 … `items.js` の `SQUARE_ID`（一辺の比率は `game.js` の `spawn()`）
+- 選択済みの丸の大きさ … `styles.css` の `.slots` の `--slot-base` / `--slot-step`
+  （育成チャートは `.chart` の `--dot-base` / `--dot-step`。どちらも `game.js` が読む）
 - スコア計算 … `items.js` の `mergeScore()`
 - BGM の曲調 … `audio.js` の `BPM` / `PROGRESSION` / `MELODY_PATTERN`
 - ファンファーレ … `audio.js` の `fanfareStart()` / `fanfareEnd()`（音名は MIDI 番号）

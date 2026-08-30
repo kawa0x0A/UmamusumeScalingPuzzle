@@ -781,10 +781,23 @@ function updateHud() {
 
 // 丸の大きさは CSS 側で決める（横向きスマホなど、高さが足りない画面で縮めるため）
 let chartDotKey = '';
+let slotKey = '';
+
+function cssSize(node, name, fallback) {
+  const v = parseFloat(getComputedStyle(node).getPropertyValue(name));
+  return Number.isFinite(v) ? v : fallback;
+}
 
 function chartDotSize(name, fallback) {
-  const v = parseFloat(getComputedStyle(el.chart).getPropertyValue(name));
-  return Number.isFinite(v) ? v : fallback;
+  return cssSize(el.chart, name, fallback);
+}
+
+function slotSize(name, fallback) {
+  return cssSize(el.slots, name, fallback);
+}
+
+function slotScaleKey() {
+  return slotSize('--slot-base', 26) + '/' + slotSize('--slot-step', 3.4);
 }
 
 /** 画面が変わって丸の大きさも変わったときだけ並べ直す */
@@ -792,6 +805,7 @@ function syncChartScale() {
   if (chartDotSize('--dot-base', 18) + '/' + chartDotSize('--dot-step', 2.4) !== chartDotKey) {
     renderChart();
   }
+  if (slotScaleKey() !== slotKey) renderSlots();
 }
 
 function renderChart() {
@@ -1164,13 +1178,16 @@ function visibleRoster() {
 }
 
 function renderSlots() {
+  const base = slotSize('--slot-base', 26);
+  const step = slotSize('--slot-step', 3.4);
+  slotKey = slotScaleKey();
   el.slots.innerHTML = '';
   SIZES.forEach((_, i) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'slot' + (draft[i] ? ' filled' : '') + (i === activeSlot ? ' active' : '');
-    const d = 26 + i * 3.4;
+    const d = base + i * step;
     b.style.width = b.style.height = d + 'px';
 
     const c = draft[i] ? ROSTER_BY_ID.get(draft[i]) : null;
