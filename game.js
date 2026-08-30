@@ -643,7 +643,25 @@ function updateHud() {
   drawNext();
 }
 
+// 丸の大きさは CSS 側で決める（横向きスマホなど、高さが足りない画面で縮めるため）
+let chartDotKey = '';
+
+function chartDotSize(name, fallback) {
+  const v = parseFloat(getComputedStyle(el.chart).getPropertyValue(name));
+  return Number.isFinite(v) ? v : fallback;
+}
+
+/** 画面が変わって丸の大きさも変わったときだけ並べ直す */
+function syncChartScale() {
+  if (chartDotSize('--dot-base', 18) + '/' + chartDotSize('--dot-step', 2.4) !== chartDotKey) {
+    renderChart();
+  }
+}
+
 function renderChart() {
+  const dotBase = chartDotSize('--dot-base', 18);
+  const dotStep = chartDotSize('--dot-step', 2.4);
+  chartDotKey = dotBase + '/' + dotStep;
   el.chart.innerHTML = '';
   ITEMS.forEach((item, i) => {
     const li = document.createElement('li');
@@ -652,7 +670,7 @@ function renderChart() {
     const dot = document.createElement('span');
     dot.className = 'dot';
     dot.style.borderColor = item.color;
-    const d = 18 + i * 2.4;
+    const d = dotBase + i * dotStep;
     dot.style.width = dot.style.height = d + 'px';
     dot.style.fontSize = Math.round(d * 0.55) + 'px';
     if (icons[i]) {
@@ -1111,6 +1129,7 @@ function fitAll() {
   fitCanvas(canvas, ctx, W, H);
   fitCanvas(nextCanvas, nextCtx, 84, 84);
   drawNext();
+  syncChartScale();
 }
 fitAll();
 window.addEventListener('resize', fitAll);
